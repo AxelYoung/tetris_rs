@@ -12,10 +12,10 @@ pub struct Vertex {
 
 
 const TILE_VERTS: [Vertex; 4] =  [
-    Vertex { position: [1.0, 1.0, 0.0], tex_coords: [1.0, 1.0], }, // Top right
-    Vertex { position: [-1.0, 1.0, 0.0], tex_coords: [0.0, 1.0], }, // Top left
-    Vertex { position: [-1.0, -1.0, 0.0], tex_coords: [0.0, 0.0], }, // Bottom left
-    Vertex { position: [1.0, -1.0, 0.0], tex_coords: [1.0, 0.0], }, // Bottom right
+    Vertex { position: [1.0, 1.0, 0.0], tex_coords: [1.0, 0.0], }, // Top right
+    Vertex { position: [-1.0, 1.0, 0.0], tex_coords: [0.0, 0.0], }, // Top left
+    Vertex { position: [-1.0, -1.0, 0.0], tex_coords: [0.0, 1.0], }, // Bottom left
+    Vertex { position: [1.0, -1.0, 0.0], tex_coords: [1.0, 1.0], }, // Bottom right
 ];
 
 const TILE_INDIS: [u16; 6] = [
@@ -56,6 +56,10 @@ pub fn create_buffers(device: &wgpu::Device, state: &GameState) -> (Option<wgpu:
                 create_tile([x, y], &mut verts, &mut indis);
             }
         }
+    }
+
+    for cell in state.tetrimino {
+        create_tile([cell.x + state.pos[0], cell.y + state.pos[1]], &mut verts, &mut indis);
     }
 
     let vertex_buffer = device.create_buffer_init(

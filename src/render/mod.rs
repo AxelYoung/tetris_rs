@@ -1,16 +1,11 @@
-
-use wgpu::util::DeviceExt;
-use winit::{
-    event::*,
-    window::Window
-};
+use winit::window::Window;
 
 mod texture;
 mod buffer;
 
 use texture::Texture;
 
-use crate::systems::{GameState, Dir};
+use crate::systems::GameState;
 
 pub struct State {
     surface: wgpu::Surface,
