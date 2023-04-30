@@ -1,9 +1,14 @@
 use winit::event::*;
 use rand::Rng;
 
+pub const GRID_SIZE: [i32;2] = [10, 20];
+pub const DEFAULT_POS: [i32;2] = [GRID_SIZE[0] / 2, GRID_SIZE[1] - 1];
+const FRAME_TIME: f32 = 0.005;
+const MOVE_TIME: f32 = 1.0;
+
 pub struct GameState<'a> {
     pub board: [[bool; GRID_SIZE[1] as usize]; GRID_SIZE[0] as usize],
-    pub tetrimino: &'a [Cell],
+    pub tetrimino: Tetrimino<'a>,
     pub pos: [i32; 2],
     dir: Option<Dir>,
     time: f32,
@@ -11,121 +16,48 @@ pub struct GameState<'a> {
     score: u8
 }
 
+type Tetrimino<'a> = &'a[&'a[bool]];
+
 pub enum Dir {
     Down,
     Right,
     Left,
 }
 
-pub const GRID_SIZE: [i32;2] = [10, 20];
-pub const DEFAULT_POS: [i32;2] = [GRID_SIZE[0] / 2, GRID_SIZE[1] - 1];
-const FRAME_TIME: f32 = 0.005;
-const MOVE_TIME: f32 = 1.0;
-
-const SQUARE_TETRIMINO: &[Cell] = &[
-    Cell {x: 0, y: 0},
-    Cell {x: 0, y: -1},
-    Cell {x: -1, y: 0},
-    Cell {x: -1, y: -1},
+const O_TETRIMINO : Tetrimino = &[
+    &[true, true],
+    &[true, true]
 ];
 
-const T_TETRIMINO: &[Cell] = &[
-    Cell {x: 0, y: 0},
-    Cell {x: -1, y: -1},
-    Cell {x: 1, y: -1},
-    Cell {x: 0, y: -1},
+const T_TETRIMINO : Tetrimino = &[
+    &[false, true, false],
+    &[true, true, true]
 ];
 
-const T_TETRIMINO_U: &[Cell] = &[
-    Cell {x: 0, y: -2},
-    Cell {x: -1, y: -1},
-    Cell {x: 1, y: -1},
-    Cell {x: 0, y: -1},
+const S_TETRIMINO : Tetrimino = &[
+    &[false, true, true],
+    &[true, true, false]
 ];
 
-const T_TETRIMINO_L: &[Cell] = &[
-    Cell {x: 0, y: 0},
-    Cell {x: -1, y: -1},
-    Cell {x: 0, y: -1},
-    Cell {x: 0, y: -2},
+const Z_TETRIMINO : Tetrimino = &[
+    &[true, true, false],
+    &[false, true, true]
 ];
 
-const T_TETRIMINO_R: &[Cell] = &[
-    Cell {x: 0, y: 0},
-    Cell {x: 1, y: -1},
-    Cell {x: 0, y: -1},
-    Cell {x: 0, y: -2},
+const J_TETRIMINO : Tetrimino = &[
+    &[true, false, false],
+    &[true, true, true]
 ];
 
-const LINE_TETRIMINO: &[Cell] = &[
-    Cell {x: 1, y: 0},
-    Cell {x: 0, y: 0},
-    Cell {x: 2, y: 0},
-    Cell {x: -1, y: 0},
+const L_TETRIMINO : Tetrimino = &[
+    &[false, false, true],
+    &[true, true, true]
 ];
 
-const LINE_TETRIMINO_U: &[Cell] = &[
-    Cell {x: 0, y: 0},
-    Cell {x: 0, y: -1},
-    Cell {x: 0, y: -2},
-    Cell {x: 0, y: -3},
+const I_TETRIMINO : Tetrimino = &[
+    &[true, true, true, true]
 ];
 
-const L_TETRIMINO: &[Cell] = &[
-    Cell {x: -1, y: 0},
-    Cell {x: -1, y: -1},
-    Cell {x: 0, y: -1},
-    Cell {x: 1, y: -1},
-];
-
-const L_TETRIMINO_R: &[Cell] = &[
-    Cell {x: 0, y: 0},
-    Cell {x: 0, y: -1},
-    Cell {x: 0, y: -2},
-    Cell {x: 1, y: 0},
-];
-
-const L_TETRIMINO_U: &[Cell] = &[
-    Cell {x: 1, y: 0},
-    Cell {x: 1, y: -1},
-    Cell {x: 0, y: 0},
-    Cell {x: -1, y: 0},
-];
-
-const L_TETRIMINO_L: &[Cell] = &[
-    Cell {x: 1, y: 0},
-    Cell {x: 1, y: -1},
-    Cell {x: 0, y: -2},
-    Cell {x: 1, y: -2},
-];
-
-const RL_TETRIMINO: &[Cell] = &[
-    Cell {x: 1, y: 0},
-    Cell {x: -1, y: -1},
-    Cell {x: 0, y: -1},
-    Cell {x: 1, y: -1},
-];
-
-const RL_TETRIMINO_R: &[Cell] = &[
-    Cell {x: 0, y: 0},
-    Cell {x: 0, y: -1},
-    Cell {x: 0, y: -2},
-    Cell {x: 1, y: -2},
-];
-
-const RL_TETRIMINO_U: &[Cell] = &[
-    Cell {x: 1, y: 0},
-    Cell {x: -1, y: -1},
-    Cell {x: 0, y: 0},
-    Cell {x: -1, y: 0},
-];
-
-const RL_TETRIMINO_L: &[Cell] = &[
-    Cell {x: 1, y: 0},
-    Cell {x: 1, y: -1},
-    Cell {x: 0, y: 0},
-    Cell {x: 1, y: -2},
-];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Cell {
@@ -141,7 +73,7 @@ impl<'a> GameState<'a> {
             board: test,
             dir: None,
             time: 0.0,
-            tetrimino: SQUARE_TETRIMINO,
+            tetrimino: O_TETRIMINO,
             pos: DEFAULT_POS,
             paused: true,
             score: 0
@@ -178,18 +110,25 @@ impl<'a> GameState<'a> {
     }
 
     fn move_tetrimino(&mut self, dir: [i32; 2]) {
-        for cell in self.tetrimino {
-            let new_pos = [cell.x + self.pos[0] + dir[0], cell.y + self.pos[1] + dir[1]];
 
-            if !self.in_bounds(new_pos) { return }
-    
-            if self.cell_exists(new_pos) {
-                for cell in self.tetrimino {
-                    self.board[(cell.x + self.pos[0]) as usize][(cell.y + self.pos[1]) as usize] = true;
+        for (y, row) in self.tetrimino.iter().enumerate() {
+            for (x, val) in row.iter().enumerate() {
+                if !val { continue }
+
+                let new_pos = [x as i32 + self.pos[0] + dir[0], y as i32 + self.pos[1] + dir[1]];
+
+                if !self.in_bounds(new_pos) { return }
+        
+                if self.cell_exists(new_pos) {
+                    for (y2, row2) in self.tetrimino.iter().enumerate() {
+                        for (x2, val2) in row2.iter().enumerate() {
+                            if *val2 { self.board[x2 + self.pos[0] as usize][y2 + self.pos[1] as usize] = true; }
+                        }
+                    }
+                    self.random_tetrimino();
+                    self.pos = DEFAULT_POS;
+                    return
                 }
-                self.random_tetrimino();
-                self.pos = DEFAULT_POS;
-                return
             }
         }
 
@@ -197,17 +136,21 @@ impl<'a> GameState<'a> {
     }
 
     fn random_tetrimino(&mut self) {
-        let num = rand::thread_rng().gen_range(0..5);
+        let num = rand::thread_rng().gen_range(0..7);
         match num {
-            0 => {self.tetrimino = SQUARE_TETRIMINO},
+            0 => {self.tetrimino = O_TETRIMINO},
             1 => {self.tetrimino = T_TETRIMINO},
             2 => {self.tetrimino = L_TETRIMINO},
-            3 => {self.tetrimino = LINE_TETRIMINO},
-            4 => {self.tetrimino = RL_TETRIMINO},
+            3 => {self.tetrimino = I_TETRIMINO},
+            4 => {self.tetrimino = J_TETRIMINO},
+            3 => {self.tetrimino = S_TETRIMINO},
+            4 => {self.tetrimino = Z_TETRIMINO},
             _ => {}
         }
+        println!("{:?}", self.tetrimino);
     }
 
+/* 
     fn rotate_tetrimino(&mut self){
         match self.tetrimino {
             SQUARE_TETRIMINO => {},
@@ -228,6 +171,7 @@ impl<'a> GameState<'a> {
             _ => {}
         }
     }
+*/
 
     fn in_bounds(&mut self, pos: [i32; 2]) -> bool {
         if pos[0] >= 0 && pos[0] <= GRID_SIZE[0] - 1 && pos[1] <= GRID_SIZE[1] - 1 {
@@ -317,7 +261,7 @@ impl<'a> GameState<'a> {
                     },
                 ..
             } => {
-                self.rotate_tetrimino();
+                //self.rotate_tetrimino();
                 return true;
             }
             WindowEvent::KeyboardInput {

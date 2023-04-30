@@ -58,8 +58,10 @@ pub fn create_buffers(device: &wgpu::Device, state: &GameState) -> (Option<wgpu:
         }
     }
 
-    for cell in state.tetrimino {
-        create_tile([cell.x + state.pos[0], cell.y + state.pos[1]], &mut verts, &mut indis);
+    for (y, row) in state.tetrimino.iter().enumerate() {
+        for (x, val) in row.iter().enumerate() {
+            if *val { create_tile([x as i32 + state.pos[0], y as i32+ state.pos[1]], &mut verts, &mut indis); }
+        }
     }
 
     let vertex_buffer = device.create_buffer_init(
