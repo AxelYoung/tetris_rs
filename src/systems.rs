@@ -7,7 +7,8 @@ pub struct GameState<'a> {
     pub pos: [i32; 2],
     dir: Option<Dir>,
     time: f32,
-    paused: bool
+    paused: bool,
+    score: u8
 }
 
 pub enum Dir {
@@ -142,7 +143,8 @@ impl<'a> GameState<'a> {
             time: 0.0,
             tetrimino: SQUARE_TETRIMINO,
             pos: DEFAULT_POS,
-            paused: true
+            paused: true,
+            score: 0
         }
     }
 
@@ -276,6 +278,7 @@ impl<'a> GameState<'a> {
                     }
                 }
             }
+            self.score += 1;
         }
     }
 
