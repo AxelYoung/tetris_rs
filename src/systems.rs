@@ -3,7 +3,7 @@ use rand::Rng;
 
 pub const GRID_SIZE: [i32;2] = [10, 20];
 pub const DEFAULT_POS: [i32;2] = [(GRID_SIZE[0] / 2) - 1, GRID_SIZE[1] - 1];
-const FRAME_TIME: f32 = 0.005;
+const FRAME_TIME: f32 = 0.003;
 const MOVE_TIME: f32 = 1.0;
 
 pub struct GameState {
@@ -86,7 +86,7 @@ impl GameState {
     pub fn update(&mut self) {
         if self.paused {return}
 
-        self.time += FRAME_TIME;
+        self.time += FRAME_TIME + ((self.score as f32 * FRAME_TIME) / 8.0);
 
         let mut move_time = MOVE_TIME;
         
