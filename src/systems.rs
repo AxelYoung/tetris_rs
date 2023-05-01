@@ -149,7 +149,7 @@ impl GameState {
             for (row, val) in self.tetrimino.iter().rev().enumerate() {
                 new_row.push(self.tetrimino[row][col]);
             }
-            vec_tetrimino.push(new_row);
+            vec_tetrimino.insert(0, new_row);
         }
 
         self.tetrimino = vec_tetrimino;
