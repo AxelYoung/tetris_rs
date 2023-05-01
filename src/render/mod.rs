@@ -80,7 +80,7 @@ impl State {
 
         surface.configure(&device, &config);
 
-        let diffuse_bytes = include_bytes!("../img/tile.png");
+        let diffuse_bytes = include_bytes!("../img/tile_cir.png");
         let diffuse_texture = Texture::from_bytes(&device, &queue, diffuse_bytes, "tile.png").unwrap();
 
         let texture_bind_group_layout = device.create_bind_group_layout(

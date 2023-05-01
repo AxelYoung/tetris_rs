@@ -1,8 +1,3 @@
-[ ] scores
-[ ] difficulty ramp
-[ ] check if block can rotate
-[ ] pause / unpause / restart states
-
 2D Games
 ------------
 tetris

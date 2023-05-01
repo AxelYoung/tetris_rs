@@ -2,7 +2,7 @@ use winit::event::*;
 use rand::Rng;
 
 pub const GRID_SIZE: [i32;2] = [10, 20];
-pub const DEFAULT_POS: [i32;2] = [GRID_SIZE[0] / 2, GRID_SIZE[1] - 1];
+pub const DEFAULT_POS: [i32;2] = [(GRID_SIZE[0] / 2) - 1, GRID_SIZE[1] - 1];
 const FRAME_TIME: f32 = 0.005;
 const MOVE_TIME: f32 = 1.0;
 
@@ -121,20 +121,48 @@ impl GameState {
 
                 if !self.in_bounds(new_pos) { return }
         
-                if self.cell_exists(new_pos) {
-                    for (y2, row2) in self.tetrimino.iter().enumerate() {
-                        for (x2, val2) in row2.iter().enumerate() {
-                            if *val2 { self.board[x2 + self.pos[0] as usize][y2 + self.pos[1] as usize] = true; }
+                if dir[1] == -1 { 
+                    if self.cell_exists(new_pos) {
+                        for (y2, row2) in self.tetrimino.iter().enumerate() {
+                            for (x2, val2) in row2.iter().enumerate() {
+                                if !self.in_bounds([x2 as i32+ self.pos[0], y2 as i32 + self.pos[1]]) { 
+                                    self.reset_game();
+                                    return
+                                }
+                                if *val2 { self.board[x2 + self.pos[0] as usize][y2 + self.pos[1] as usize] = true; }
+                            }
                         }
+                        self.tetrimino = GameState::random_tetrimino();
+                        self.pos = DEFAULT_POS;
+                        for (y2, row2) in self.tetrimino.iter().enumerate() {
+                            for (x2, val2) in row2.iter().enumerate() {
+                                let pos = [x2 as i32 + self.pos[0], y2 as i32+ self.pos[1]];
+                                if self.in_bounds(pos) && self.cell_exists(pos) {
+                                    self.reset_game();
+                                    return
+                                }
+                            }
+                        } 
+                        return
                     }
-                    self.tetrimino = GameState::random_tetrimino();
-                    self.pos = DEFAULT_POS;
-                    return
-                }
+                 } else {
+                    if self.cell_exists(new_pos) {
+                        return
+                    }
+                 }
+
+                
             }
         }
 
         self.pos = [self.pos[0] + dir[0], self.pos[1] + dir[1]];
+    }
+
+    fn reset_game(&mut self) {
+        self.paused = true;
+        self.board = [[false; GRID_SIZE[1] as usize]; GRID_SIZE[0] as usize];
+        println!("Your score was: {}", self.score);
+        self.score = 0;
     }
 
     fn random_tetrimino() -> Vec<Vec<bool>> {
@@ -148,12 +176,13 @@ impl GameState {
             let mut new_row : Vec<bool> = vec![];
             for (row, val) in self.tetrimino.iter().rev().enumerate() {
                 new_row.push(self.tetrimino[row][col]);
+                let pos = [row as i32 + self.pos[0], col as i32 + self.pos[1]];
+                if !self.in_bounds(pos) || self.cell_exists(pos)  { return }
             }
             vec_tetrimino.insert(0, new_row);
         }
 
         self.tetrimino = vec_tetrimino;
-
     }
 
     fn in_bounds(&self, pos: [i32; 2]) -> bool {
