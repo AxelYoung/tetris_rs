@@ -16,7 +16,6 @@ pub struct State {
     window: Window,
     render_pipeline: wgpu::RenderPipeline,
     diffuse_bind_group: wgpu::BindGroup,
-    diffuse_texture: texture::Texture,
     vertex_buffer: Option<wgpu::Buffer>,
     index_buffer: Option<wgpu::Buffer>,
     index_count: usize
@@ -50,7 +49,11 @@ impl State {
         let (device, queue) = adapter.request_device(
             &wgpu::DeviceDescriptor {
                 features: wgpu::Features::empty(),
-                limits: wgpu::Limits::default(),
+                limits: if cfg!(target_arch = "wasm32") {
+                    wgpu::Limits::downlevel_webgl2_defaults()
+                } else {
+                    wgpu::Limits::default()
+                },
                 label: None
             }, 
             None
@@ -180,7 +183,6 @@ impl State {
             size,
             render_pipeline,
             diffuse_bind_group,
-            diffuse_texture,
             vertex_buffer: None,
             index_buffer: None,
             index_count: 0

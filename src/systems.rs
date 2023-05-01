@@ -3,15 +3,16 @@ use rand::Rng;
 
 pub const GRID_SIZE: [i32;2] = [10, 20];
 pub const DEFAULT_POS: [i32;2] = [(GRID_SIZE[0] / 2) - 1, GRID_SIZE[1] - 1];
-const FRAME_TIME: f32 = 0.003;
-const MOVE_TIME: f32 = 1.0;
+const TICKS_PER_SECOND: f32 = 8.0;
+const TICK_TIME: f32 = 1.0 / TICKS_PER_SECOND;
 
 pub struct GameState {
     pub board: [[bool; GRID_SIZE[1] as usize]; GRID_SIZE[0] as usize],
     pub pos: [i32; 2],
     pub tetrimino: Vec<Vec<bool>>,
     dir: Option<Dir>,
-    time: f32,
+    previous_time: instant::Instant,
+    tick: f32,
     paused: bool,
     score: u8
 }
@@ -70,12 +71,13 @@ const I_TETRIMINO : Tetrimino = &[
 
 impl GameState {
     pub fn new() -> Self {
-        let mut test = [[false; GRID_SIZE[1] as usize]; GRID_SIZE[0] as usize];
+        let test = [[false; GRID_SIZE[1] as usize]; GRID_SIZE[0] as usize];
 
         GameState {
             board: test,
             dir: None,
-            time: 0.0,
+            previous_time: instant::Instant::now(),
+            tick: 0.0,
             pos: DEFAULT_POS,
             paused: true,
             score: 0,
@@ -84,15 +86,20 @@ impl GameState {
     }
 
     pub fn update(&mut self) {
-        if self.paused {return}
+        if self.paused {
+            self.previous_time = instant::Instant::now();
+            return
+        }
 
-        self.time += FRAME_TIME + ((self.score as f32 * FRAME_TIME) / 8.0);
+        let current_time = instant::Instant::now();
+        let elapsed_time = current_time.duration_since(self.previous_time).as_secs_f32();
+        self.previous_time = current_time;
 
-        let mut move_time = MOVE_TIME;
-        
+        self.tick += elapsed_time;
+
         if let Some(dir) = &self.dir {
             match dir {
-                Dir::Down => move_time /= 3.0,
+                Dir::Down => {self.tick += elapsed_time;},
                 Dir::Left => {
                     self.move_tetrimino([-1, 0]);
                     self.dir = None;
@@ -104,9 +111,9 @@ impl GameState {
             }
         }
 
-        if self.time > move_time {
+        if self.tick > TICK_TIME {
             self.move_tetrimino([0, -1]);
-            self.time = 0.0;
+            self.tick -= TICK_TIME;
         }
 
         self.check_rows();
@@ -135,7 +142,7 @@ impl GameState {
                         self.tetrimino = GameState::random_tetrimino();
                         self.pos = DEFAULT_POS;
                         for (y2, row2) in self.tetrimino.iter().enumerate() {
-                            for (x2, val2) in row2.iter().enumerate() {
+                            for (x2, _) in row2.iter().enumerate() {
                                 let pos = [x2 as i32 + self.pos[0], y2 as i32+ self.pos[1]];
                                 if self.in_bounds(pos) && self.cell_exists(pos) {
                                     self.reset_game();
@@ -174,7 +181,7 @@ impl GameState {
 
         for col in 0..self.tetrimino[0].len() {
             let mut new_row : Vec<bool> = vec![];
-            for (row, val) in self.tetrimino.iter().rev().enumerate() {
+            for (row, _) in self.tetrimino.iter().rev().enumerate() {
                 new_row.push(self.tetrimino[row][col]);
                 let pos = [row as i32 + self.pos[0], col as i32 + self.pos[1]];
                 if !self.in_bounds(pos) || self.cell_exists(pos)  { return }
