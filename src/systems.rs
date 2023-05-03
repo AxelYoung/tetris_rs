@@ -13,7 +13,6 @@ pub struct GameState {
     dir: Option<Dir>,
     previous_time: instant::Instant,
     tick: f32,
-    paused: bool,
     score: u8
 }
 
@@ -79,18 +78,12 @@ impl GameState {
             previous_time: instant::Instant::now(),
             tick: 0.0,
             pos: DEFAULT_POS,
-            paused: true,
             score: 0,
             tetrimino: GameState::random_tetrimino()
         }
     }
 
     pub fn update(&mut self) {
-        if self.paused {
-            self.previous_time = instant::Instant::now();
-            return
-        }
-
         let current_time = instant::Instant::now();
         let elapsed_time = current_time.duration_since(self.previous_time).as_secs_f32();
         self.previous_time = current_time;
@@ -166,7 +159,6 @@ impl GameState {
     }
 
     fn reset_game(&mut self) {
-        self.paused = true;
         self.board = [[false; GRID_SIZE[1] as usize]; GRID_SIZE[0] as usize];
         println!("Your score was: {}", self.score);
         self.score = 0;
@@ -247,18 +239,6 @@ impl GameState {
 
     pub fn input(&mut self, event: &WindowEvent) -> bool {
         match event {
-            WindowEvent::KeyboardInput {
-                input:
-                    KeyboardInput {
-                        state: ElementState::Pressed,
-                        virtual_keycode: Some(VirtualKeyCode::Space),
-                        ..
-                    },
-                ..
-            } => {
-                self.paused = !self.paused;
-                return true;
-            }
             WindowEvent::KeyboardInput {
                 input:
                     KeyboardInput {
